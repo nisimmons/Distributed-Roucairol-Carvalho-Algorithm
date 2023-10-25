@@ -23,13 +23,12 @@ public class Project2Node {
         Project2Node node = new Project2Node();
         try {
             if(args.length == 2) {
-                node.readFile(args[0], node.nodeID);
+                node.readFile(args[0], Integer.parseInt(args[1]));
             }
             else {
                 node.readFile(args[0]);
             }
             node.run();
-            node.writeOutput();
         } catch (FileNotFoundException | UnknownHostException e) {
             e.printStackTrace();
         }
@@ -74,7 +73,6 @@ public class Project2Node {
             }
 
         }
-
     }
 
     public void readFile(String filename, int nodeID) throws FileNotFoundException {
@@ -115,10 +113,15 @@ public class Project2Node {
                 break;
             }
         }
+
+
     }
 
     public void run(){
-        messages.add("Node " + nodeID + " is starting on " + ip + ":" + port);
+        //initialize the mutex and application and run
+        MutualExclusion mt = new MutualExclusion(nodeID, ip, port, projectDir);
+        Application app = new Application(mt, nodeID, projectDir, interRequestDelay, requestsPerNode, csExecTime);
+        app.run();
     }
 
     public void writeOutput(){
