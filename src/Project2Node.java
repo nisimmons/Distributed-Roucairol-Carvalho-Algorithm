@@ -119,8 +119,8 @@ public class Project2Node {
 
     public void run(){
         //initialize the mutex and application and run
-        MutualExclusion mt = new MutualExclusion(nodeID, ip, port, projectDir);
-        Application app = new Application(mt, nodeID, projectDir, interRequestDelay, requestsPerNode, csExecTime);
+        MutualExclusion mt = new MutualExclusion(nodeID, ip, port, projectDir, numNodes);
+        Application app = new Application(mt, nodeID, projectDir, interRequestDelay, requestsPerNode, csExecTime, numNodes);
         app.run();
     }
 
