@@ -11,6 +11,8 @@ public class MutualExclusion implements Runnable {
     private String projectDir;
     private HashSet<Integer> sentPerms;
     private HashSet<Integer> deferred;
+    private int[] myRequestClock;
+
     private boolean alive;
     public MutualExclusion(int nodeID, String hostName, int port, String projectDir, int numNodes){
         this.nodeID = nodeID;
@@ -27,6 +29,7 @@ public class MutualExclusion implements Runnable {
         }
     }
     public void csEnter(int[] fidgeClock) {
+        myRequestClock = fidgeClock;
         //for every node in sentPerms, request permission
         for(int i : sentPerms){
             try {
@@ -34,11 +37,11 @@ public class MutualExclusion implements Runnable {
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out.println("REQUEST " + nodeID + Arrays.toString(fidgeClock));
-                String serverMessage;
-                while ((serverMessage = in.readLine()) != null) {
-                    if(serverMessage.equals("PERMISSION " + nodeID)){
-                        //add the node to the sentPerms set
-                        sentPerms.add(i);
+                String response;
+                while((response = in.readLine()) != null){
+                    if(response.equals("PERMISSION " + nodeID)){
+                        //add to sentPerms
+                        sentPerms.remove(i);
                         break;
                     }
                 }
@@ -46,10 +49,27 @@ public class MutualExclusion implements Runnable {
                 e.printStackTrace();
             }
         }
+        //wait until we have all perms
+        while(sentPerms.isEmpty()){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void csLeave() {
-
+        //send all deferred messages
+        for(int i : deferred){
+            try {
+                Socket socket = new Socket(hostName, port);
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                out.println("PERMISSION " + nodeID);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
@@ -59,10 +79,7 @@ public class MutualExclusion implements Runnable {
             InetAddress address = InetAddress.getByName(hostName);
             InetSocketAddress socketAddress = new InetSocketAddress(address, port);
             ServerSocket socket = new ServerSocket();
-            System.out.print("Attempting to bind socket to " + hostName + ":" + port + "...");
             socket.bind(socketAddress);
-            System.out.println("Success!");
-
 
             //listen for messages
             while (alive) {
@@ -72,7 +89,23 @@ public class MutualExclusion implements Runnable {
                 String clientMessage;
                 while ((clientMessage = in.readLine()) != null && alive) {
                     System.out.println("Recieved message \"" + clientMessage + "\" from client " + clientSocket.getInetAddress().getHostName());
-
+                    //reply yes if we have no request open or my timestamp is higher than incoming, else add to deferred
+                    String[] message = clientMessage.split(" ");
+                    switch(message[0]){
+                        case "REQUEST":
+                            int[] incomingClock = new int[numNodes];
+                            for(int i = 0; i < numNodes; i++){
+                                incomingClock[i] = Integer.parseInt(message[1].substring(i+1, i+2));
+                            }
+                            if(myRequestClock == null || Arrays.compare(incomingClock, myRequestClock) < 0){
+                                //reply yes
+                                out.println("PERMISSION " + nodeID);
+                            }else{
+                                //add to deferred
+                                deferred.add(Integer.parseInt(message[1].substring(0, 1)));
+                            }
+                            break;
+                    }
 
                 }
             }
