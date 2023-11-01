@@ -6,7 +6,17 @@ public class Neighbor {
     private int id;
     private String hostName;
     private int port;
-    private boolean red;
+
+    public boolean isAlive() {
+        return isAlive;
+    }
+
+    public void setAlive(boolean alive) {
+        isAlive = alive;
+    }
+
+    private boolean isAlive;
+
 
     public int getId() {
         return id;
@@ -26,6 +36,5 @@ public class Neighbor {
     public void setPort(int port) {
         this.port = port;
     }
-    public boolean isRed() {return red;}
-    public void setRed(boolean red) {this.red = red;}
+
 }

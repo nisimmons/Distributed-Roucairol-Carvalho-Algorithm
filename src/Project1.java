@@ -1,16 +1,19 @@
+/*
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 
+*/
 /**
  * Created by Nate Simmons on 10/10/2023
  * This class is the main class for a system of client/servers that communicate with each other using sockets.
  * It reads in a config file and creates the nodes and their neighbors. It then starts the threads for this node.
  * The nodes will communicate with each other until all nodes are passive. Then the program will exit.
  * There is also support for a snapshot thread that sends messages to neighbor nodes to get their state.
- */
+ *//*
+
 public class Project1 {
     private int id;
     private String hostName;
@@ -35,20 +38,24 @@ public class Project1 {
     private int[] fidgeClock;
 
 
-    /**
+    */
+/**
      * This is the main method for the program. It creates a new Project1 object and passes the args to it.
      * @param args directory for config file
-     */
+     *//*
+
     public static void main(String[]args)  {
         Project1 p = new Project1(args);
     }
 
-    /**
+    */
+/**
      * It reads in the config file and creates the nodes and their neighbors.
      * It then starts the threads for each node. The nodes will communicate with each other until all nodes are passive.
      * Then the program will join all threads and exit.
      * @param args directory for config file
-     */
+     *//*
+
     public Project1(String[]args){
         //open config file specified in args[0]
         configFilename = args[0];
@@ -352,12 +359,14 @@ public class Project1 {
         }
     }
 
-    /**
+    */
+/**
      * Reads in the config file and returns an array of neighbors
      * @param filename the name of the config file
      * @return an array of neighbors
      * @throws FileNotFoundException if the config file is not found
-     */
+     *//*
+
     private Neighbor[] readNeighbors(String filename) throws FileNotFoundException {
         Neighbor[] neighbors;
         //read the config file
@@ -397,11 +406,13 @@ public class Project1 {
         return neighbors;
     }
 
-    /**
+    */
+/**
      * Reconciles the local clock with the clock received from a client
      * @param fidgeClock the local clock
      * @param clientMessage the message received from the client
-     */
+     *//*
+
     private void updateFidgeClock(int[] fidgeClock, String clientMessage) {
         //parse the client clock from the message
         int[] clientClock = new int[fidgeClock.length];
@@ -415,9 +426,11 @@ public class Project1 {
         }
     }
 
-    /**
+    */
+/**
      * Writes the output to a file
-     */
+     *//*
+
     private void writeOutput() {
         //write output to config<id>.out
         try {
@@ -441,12 +454,14 @@ public class Project1 {
         }
     }
 
-    /**
+    */
+/**
      * Reads the config file and sets the node information
      * @param filename the name of the config file
      * @throws FileNotFoundException if the file is not found
      * @throws UnknownHostException if the host is not found
-     */
+     *//*
+
     public void readFile(String filename) throws FileNotFoundException, UnknownHostException {
         //read the config file
         Scanner scanner = new Scanner(new File(filename));
@@ -520,4 +535,4 @@ public class Project1 {
             }
         }
     }
-}
+}*/

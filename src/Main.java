@@ -1,11 +1,13 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) throws FileNotFoundException {
-        readFile("C:\\Users\\nsimm\\Downloads\\CS6378Project2Part1\\src");
+    public static void main(String[] args) throws FileNotFoundException, UnknownHostException {
+        readFile("X:\\Code\\Intellij\\CS6378Project2Part1\\src");
     }
     public static void readFile(String filename) throws FileNotFoundException {
         //read the config file

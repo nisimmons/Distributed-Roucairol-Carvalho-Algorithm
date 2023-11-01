@@ -17,6 +17,7 @@ public class Project2Node {
     private int port;
     private String projectDir;
     private ArrayList<String> messages = new ArrayList<>();
+    private ArrayList<Neighbor> neighbors = new ArrayList<>();
 
 
     public static void main(String[] args){
@@ -69,7 +70,14 @@ public class Project2Node {
                 this.nodeID = node;
                 this.ip = ip;
                 this.port = port;
-                break;
+
+            }
+            else{
+                Neighbor neighbor = new Neighbor();
+                neighbor.setId(node);
+                neighbor.setHostName(ip);
+                neighbor.setPort(port);
+                neighbors.add(neighbor);
             }
 
         }
@@ -110,18 +118,23 @@ public class Project2Node {
                 this.nodeID = node;
                 this.ip = ip;
                 this.port = port;
-                break;
+
+            }
+            else{
+                Neighbor neighbor = new Neighbor();
+                neighbor.setId(node);
+                neighbor.setHostName(ip);
+                neighbor.setPort(port);
+                neighbor.setAlive(true);
+                neighbors.add(neighbor);
             }
         }
-
-
     }
 
     public void run(){
         //initialize the mutex and application and run
-        MutualExclusion mt = new MutualExclusion(nodeID, ip, port, projectDir, numNodes);
-        Application app = new Application(mt, nodeID, projectDir, interRequestDelay, requestsPerNode, csExecTime, numNodes);
-        app.run();
+        MutualExclusion mt = new MutualExclusion(nodeID, ip, port, projectDir, numNodes, neighbors);
+        new Application(mt, nodeID, projectDir, interRequestDelay, requestsPerNode, csExecTime, numNodes);
     }
 
     public void writeOutput(){

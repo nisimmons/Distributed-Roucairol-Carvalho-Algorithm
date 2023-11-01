@@ -6,6 +6,6 @@
 # code to remove carriage returns from files: sed -i -e 's/\r$//' <filename>
 
 # compilation command [CHANGE THIS to match your project files]
-javac Project1.java Neighbor.java
+javac Project2Node.java Neighbor.java Application.java MutualExclusion.java
 
 echo done building
