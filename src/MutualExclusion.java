@@ -18,6 +18,7 @@ public class MutualExclusion {
     HashMap<Integer, Neighbor> neighbors;
     private boolean inCS;
     public int[] fidgeClock;
+    private boolean finished;
 
     private Thread listener;
     private boolean alive;
@@ -101,6 +102,21 @@ public class MutualExclusion {
                                 neighbors.get(Integer.parseInt(message[1])).setAlive(false);
                                 sentPerms.remove(Integer.parseInt(message[1]));
                             }
+                            else{
+                                finished = true;
+                            }
+                            //if everyone is finished, unalive
+                            boolean allFinished = true;
+                            for(Neighbor n : neighbors.values()){
+                                if(n.isAlive()){
+                                    allFinished = false;
+                                    break;
+                                }
+                            }
+                            if(!finished)
+                                allFinished = false;
+                            if(allFinished)
+                                alive = false;
                             break;
                         case "ENTER":
                             inCS = true;
@@ -222,6 +238,7 @@ public class MutualExclusion {
                 sentPerms.add(i);
             } catch (IOException e) {
                 e.printStackTrace();
+                System.out.println("Node " + nodeID + " failed to send permission to node " + i);
             }
         }
         deferred.clear();
@@ -230,17 +247,15 @@ public class MutualExclusion {
 
     public void finish() {
         System.out.println("Node " + nodeID + " finish() called");
-        alive = false;
         //send a message to all neighbors to tell them we are finished
         for(Neighbor n : neighbors.values()){
-            if(!n.isAlive())
-                continue;
             try {
                 Socket socket = new Socket(n.getHostName(), n.getPort());
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 out.println("FINISHED " + nodeID);
                 socket.close();
             } catch (IOException e) {
+                System.out.println("Node " + nodeID + " failed to send FINISHED to node " + n.getId());
                 e.printStackTrace();
             }
         }
@@ -251,6 +266,7 @@ public class MutualExclusion {
             out.println("FINISHED " + nodeID);
             socket.close();
         } catch (IOException e) {
+            System.out.println("Node " + nodeID + " failed to send FINISHED to self");
             e.printStackTrace();
         }
     }

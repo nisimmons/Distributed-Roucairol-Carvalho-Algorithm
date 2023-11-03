@@ -26,7 +26,7 @@ public class Application  {
 
         app = new Thread(() -> {
             try {
-                FileWriter fileWriter = new FileWriter(projectDir + "\\output"+nodeID+".txt", true);
+                FileWriter fileWriter = new FileWriter(projectDir + "\\output"+nodeID+".txt");
                 //loop for requestsPerNode
                 for (int i = 0; i < requestsPerNode; i++) {
                     //call mutex csEnter
@@ -70,7 +70,9 @@ public class Application  {
 
 
     private double exponentialProbabilityDistribution(int x){
-        Random random = new Random();
-        return -x * Math.log(1 - random.nextDouble());
+        /*Random random = new Random();
+        return -x * Math.log(1 - random.nextDouble());*/
+        //return x*random number between 1 and 4
+        return x*(rand.nextInt(4)+1);
     }
 }
