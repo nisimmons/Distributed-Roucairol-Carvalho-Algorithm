@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class Application  {
+    private final boolean verbosity = false;
     MutualExclusion mutex;
     private int numNodes;
     private final int interRequestDelay;
@@ -31,9 +32,11 @@ public class Application  {
                 for (int i = 0; i < requestsPerNode; i++) {
                     //call mutex csEnter
                     mutex.csEnter();
-                    System.out.println("Node " + nodeID + " entered CS");
+                    if(verbosity)
+                        System.out.println("Node " + nodeID + " entered CS");
                     mutex.fidgeClock[nodeID]++;
-                    System.out.println("Fidge clock: " + Arrays.toString(mutex.fidgeClock));
+                    if(verbosity)
+                        System.out.println("Fidge clock: " + Arrays.toString(mutex.fidgeClock));
 
                     //write to output file
                     fileWriter.write(nodeID + " enters " + Arrays.toString(mutex.fidgeClock) + "\n");
@@ -47,14 +50,16 @@ public class Application  {
 
                     //call mutex csLeave
                     mutex.fidgeClock[nodeID]++;
-                    System.out.println("Node " + nodeID + " left CS");
+                    if(verbosity)
+                        System.out.println("Node " + nodeID + " left CS");
                     mutex.csLeave();
 
                     //wait for interRequestDelay and loop
                     Thread.sleep((long) exponentialProbabilityDistribution(interRequestDelay));
                 }
                 fileWriter.close();
-                System.out.println("Node " + nodeID + " app finished");
+                if(verbosity)
+                    System.out.println("Node " + nodeID + " app finished");
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -72,7 +77,10 @@ public class Application  {
     private double exponentialProbabilityDistribution(int x){
         /*Random random = new Random();
         return -x * Math.log(1 - random.nextDouble());*/
-        //return x*random number between 1 and 4
-        return x*(rand.nextInt(4)+1);
+        //return x*(rand.nextInt(4)+1);
+        //return lambda e^-lambda*x
+        return -x*Math.log(1-rand.nextDouble());
+
+
     }
 }

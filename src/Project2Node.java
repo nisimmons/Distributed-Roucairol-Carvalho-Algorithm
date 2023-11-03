@@ -70,7 +70,6 @@ public class Project2Node {
                 this.nodeID = node;
                 this.ip = ip;
                 this.port = port;
-
             }
             else{
                 Neighbor neighbor = new Neighbor();

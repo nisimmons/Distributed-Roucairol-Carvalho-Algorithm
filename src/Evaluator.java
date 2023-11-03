@@ -6,9 +6,8 @@ import java.util.*;
 
 public class Evaluator {
     public static void main(String[] args) throws IOException {
-        String projectDir = "X:\\Code\\Intellij\\CS6378Project2Part1\\src";
         //read the config file to find num nodes, inter-request delay, cs-exec time, requests per node
-        Scanner scanner = new Scanner(new File(projectDir+"\\config.txt"));
+        Scanner scanner = new Scanner(new File("src/config.txt"));
         String s;
         ArrayList<String> validLines = new ArrayList<>();
         Scanner line;
@@ -30,7 +29,7 @@ public class Evaluator {
         int requestsPerNode = line.nextInt();
 
         for(int i = 0; i < numNodes; i++) {
-            if(!verifyFile(projectDir+"\\output"+i+".txt", numNodes)) {
+            if(!verifyFile("src/output"+i+".txt", numNodes)) {
                 throw new RuntimeException("Invalid file for node " + i);
             }
         }
@@ -43,7 +42,7 @@ public class Evaluator {
         //fill list with entries from every output file
         ArrayList<specialObject> temp = new ArrayList<>();
         for(int i = 0; i < numNodes; i++) {
-            Scanner fileScanner = new Scanner(new File(projectDir+"\\output"+i+".txt"));
+            Scanner fileScanner = new Scanner(new File("src/output"+i+".txt"));
             while(fileScanner.hasNext()) {
                 specialObject obj = new specialObject();
                 String l = fileScanner.nextLine();
@@ -60,7 +59,7 @@ public class Evaluator {
         //sort temp using comparator
         temp.sort(new specialComparator());
 
-        FileWriter fileWriter = new FileWriter(projectDir + "\\outputFull.txt");
+        FileWriter fileWriter = new FileWriter("src/outputFull.txt");
         for(int i = 0; i < temp.size(); i++) {
             fileWriter.write("Node " + temp.get(i).nodeID + " " + Arrays.toString(temp.get(i).fidgeClock) + "\n");
         }

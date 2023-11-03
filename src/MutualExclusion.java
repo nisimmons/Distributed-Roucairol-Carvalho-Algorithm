@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class MutualExclusion {
+    private final boolean verbosity = false;
     private int nodeID;
     private String hostName;
     private int port;
@@ -49,16 +50,19 @@ public class MutualExclusion {
             socket.bind(socketAddress);
             System.out.println("Node " + nodeID + " listening on " + InetAddress.getLocalHost().getHostAddress() + ":" + port);*/
                 ServerSocket socket = new ServerSocket(port);
-                System.out.println("Node " + nodeID + " listening on " + InetAddress.getLocalHost().getHostAddress() + ":" + port);
+                if(verbosity)
+                    System.out.println("Node " + nodeID + " listening on " + InetAddress.getLocalHost().getHostAddress() + ":" + port);
                 //listen for messages
                 while (alive) {
                     Socket clientSocket = socket.accept();
-                    System.out.println("Node " + nodeID + " accepted connection");
+                    if(verbosity)
+                        System.out.println("Node " + nodeID + " accepted connection");
                     //System.out.println("Node " + nodeID + " accepted connection from " + clientSocket.getPort());
                     BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     String clientMessage;
                     clientMessage = in.readLine();
-                    System.out.println("Node " + nodeID + " received message \"" + clientMessage + "\"");
+                    if(verbosity)
+                        System.out.println("Node " + nodeID + " received message \"" + clientMessage + "\"");
                     //reply yes if we have no request open or my timestamp is higher than incoming, else add to deferred
                     String[] message = clientMessage.split(" ");
                     // format is REQUEST <nodeID> <timestamp> <fidgeClock>
@@ -68,18 +72,21 @@ public class MutualExclusion {
                                 //reply yes
                                 sentPerms.add(Integer.parseInt(message[1]));
                                 try {
-                                    System.out.println("Node " + nodeID + " sending permission to node " + message[1] + " at " + neighbors.get(Integer.parseInt(message[1])).getHostName() + ":" + neighbors.get(Integer.parseInt(message[1])).getPort());
+                                    if(verbosity)
+                                        System.out.println("Node " + nodeID + " sending permission to node " + message[1] + " at " + neighbors.get(Integer.parseInt(message[1])).getHostName() + ":" + neighbors.get(Integer.parseInt(message[1])).getPort());
                                     Socket socket2 = new Socket(InetAddress.getLocalHost().getHostAddress(), neighbors.get(Integer.parseInt(message[1])).getPort());
                                     PrintWriter out = new PrintWriter(socket2.getOutputStream(), true);
                                     out.println("PERMISSION " + nodeID + " " + Arrays.toString(fidgeClock));
                                     socket2.close();
-                                    System.out.println("Node " + nodeID + " sent permission to node " + message[1]);
+                                    if(verbosity)
+                                        System.out.println("Node " + nodeID + " sent permission to node " + message[1]);
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
                             }else{
                                 //add to deferred
-                                System.out.println("Node " + nodeID + " deferred node " + message[1]);
+                                if(verbosity)
+                                    System.out.println("Node " + nodeID + " deferred node " + message[1]);
                                 deferred.add(Integer.parseInt(message[1]));
                             }
                             break;
@@ -137,7 +144,8 @@ public class MutualExclusion {
                     if(allDead)
                         alive = false;*/
                 }
-                System.out.println("Node " + nodeID + " socket closed");
+                if(verbosity)
+                    System.out.println("Node " + nodeID + " socket closed");
                 socket.close();
             }catch (FileNotFoundException | UnknownHostException e) {
                 e.printStackTrace();
@@ -147,7 +155,8 @@ public class MutualExclusion {
                 System.out.println("IOException in MutualExclusion.run() - socket timed out or failed to bind (probably failed to bind)");
 
             }
-            System.out.println("Node " + nodeID + " finished listening");
+            if(verbosity)
+                System.out.println("Node " + nodeID + " finished listening");
         });
         listener.start();
     }
@@ -156,7 +165,8 @@ public class MutualExclusion {
      * Enter the critical section. Request permission from all nodes for which we do not have permission.
      */
     public void csEnter() {
-        System.out.println("Node " + nodeID + " sent perms = " + sentPerms);
+        if(verbosity)
+            System.out.println("Node " + nodeID + " sent perms = " + sentPerms);
         myRequestClock = fidgeClock[nodeID];
         HashSet<Integer> requested = new HashSet<>();
         //make a copy of sentPerms to iterate over
@@ -164,12 +174,14 @@ public class MutualExclusion {
         for(int i : tempSentPerms){
             try {
                 Neighbor n = neighbors.get(i);
-                System.out.println("Node " + nodeID + " requesting permission from node " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
+                if(verbosity)
+                    System.out.println("Node " + nodeID + " requesting permission from node " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
                 Socket socket = new Socket(InetAddress.getLocalHost().getHostAddress(), n.getPort());
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 out.println("REQUEST " + nodeID + " " + myRequestClock + " " + Arrays.toString(fidgeClock));
                 socket.close();
-                System.out.println("Node " + nodeID + " sent request to node " + i);
+                if(verbosity)
+                    System.out.println("Node " + nodeID + " sent request to node " + i);
                 requested.add(i);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -190,12 +202,14 @@ public class MutualExclusion {
                 for(int i : temp){
                     try {
                         Neighbor n = neighbors.get(i);
-                        System.out.println("Node " + nodeID + " requesting permission from node " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
+                        if(verbosity)
+                            System.out.println("Node " + nodeID + " requesting permission from node " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
                         Socket socket = new Socket(InetAddress.getLocalHost().getHostAddress(), n.getPort());
                         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                        out.println("REQUEST " + nodeID + " " + myRequestClock + " " + Arrays.toString(fidgeClock));
+                        out.println("REQUEST " + nodeID + " " + myRequestClock);
                         socket.close();
-                        System.out.println("Node " + nodeID + " sent request to node " + i);
+                        if(verbosity)
+                            System.out.println("Node " + nodeID + " sent request to node " + i);
                         requested.add(i);
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -217,7 +231,8 @@ public class MutualExclusion {
     public void csLeave() {
         myRequestClock = -1;
         inCS = false;
-        System.out.println("Node " + nodeID + " deferred = " + deferred);
+        if(verbosity)
+            System.out.println("Node " + nodeID + " deferred = " + deferred);
         //message self that we have exited
         /*try {
             Socket socket = new Socket(hostName, port);
@@ -234,7 +249,8 @@ public class MutualExclusion {
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 out.println("PERMISSION " + nodeID + " " + Arrays.toString(fidgeClock));
                 socket.close();
-                System.out.println("Node " + nodeID + " sent permission to node " + i);
+                if(verbosity)
+                    System.out.println("Node " + nodeID + " sent permission to node " + i);
                 sentPerms.add(i);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -246,7 +262,8 @@ public class MutualExclusion {
 
 
     public void finish() {
-        System.out.println("Node " + nodeID + " finish() called");
+        if(verbosity)
+            System.out.println("Node " + nodeID + " finish() called");
         //send a message to all neighbors to tell them we are finished
         for(Neighbor n : neighbors.values()){
             try {
