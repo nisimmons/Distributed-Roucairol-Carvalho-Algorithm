@@ -38,19 +38,19 @@ public class Project2Node {
     public void readFile(String filename) throws FileNotFoundException, UnknownHostException {
         projectDir = filename;
         //read the config file
-        Scanner scanner = new Scanner(new File(filename+"\\config.txt"));
+        Scanner scanner = new Scanner(new File(filename));
         String s;
         ArrayList<String> validLines = new ArrayList<>();
         Scanner line;
 
         while(scanner.hasNext()) {
-            do {
-                s = scanner.nextLine();
-                s = s.replaceAll("#.*", "");    //remove comments
-                s = s.trim();                                   //remove leading and trailing whitespace
-            } while (!s.matches("^\\d .*"));              //check if the line starts with an unsigned integer
-            validLines.add(s);
+            s = scanner.nextLine();
+            s = s.replaceAll("#.*", "");    //remove comments
+            s = s.trim();                                   //remove leading and trailing whitespace
+            if (s.matches("^\\d.*"))              //check if the line starts with an unsigned integer
+                validLines.add(s);
         }
+
 
         //line 1 is nodes, inter-request delay, cs-exec time, requests per node
         line = new Scanner(validLines.get(0));
@@ -85,22 +85,24 @@ public class Project2Node {
     public void readFile(String filename, int nodeID) throws FileNotFoundException {
         projectDir = filename;
         //read the config file
-        Scanner scanner = new Scanner(new File(filename + "\\config.txt"));
+        Scanner scanner = new Scanner(new File(filename));
         String s;
         ArrayList<String> validLines = new ArrayList<>();
         Scanner line;
 
         while(scanner.hasNext()) {
-            do {
-                s = scanner.nextLine();
-                s = s.replaceAll("#.*", "");    //remove comments
-                s = s.trim();                                   //remove leading and trailing whitespace
-            } while (!s.matches("^\\d .*"));              //check if the line starts with an unsigned integer
-            validLines.add(s);
+            s = scanner.nextLine();
+            s = s.replaceAll("#.*", "");    //remove comments
+            s = s.trim();                                   //remove leading and trailing whitespace
+            if (s.matches("^\\d.*"))              //check if the line starts with an unsigned integer
+                validLines.add(s);
         }
+
+
 
         //line 1 is nodes, inter-request delay, cs-exec time, requests per node
         line = new Scanner(validLines.get(0));
+
         numNodes = line.nextInt();
         interRequestDelay = line.nextInt();
         csExecTime = line.nextInt();
@@ -133,7 +135,7 @@ public class Project2Node {
     public void run(){
         //initialize the mutex and application and run
         MutualExclusion mt = new MutualExclusion(nodeID, ip, port, projectDir, numNodes, neighbors);
-        new Application(mt, nodeID, projectDir, interRequestDelay, requestsPerNode, csExecTime, numNodes);
+        new Application(mt, nodeID, projectDir, interRequestDelay, requestsPerNode, csExecTime, numNodes , neighbors);
     }
 
     public void writeOutput(){

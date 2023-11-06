@@ -1,10 +1,12 @@
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+import java.net.Socket;
 
 public class Application  {
-    private final boolean verbosity = false;
+    private final boolean verbosity = true;
     MutualExclusion mutex;
     private int numNodes;
     private final int interRequestDelay;
@@ -13,7 +15,7 @@ public class Application  {
     private final int nodeID;
     private final String projectDir;
     Random rand = new Random();
-    public Application(MutualExclusion mutualExclusion, int nodeID, String projectDir, int interRequestDelay, int requestsPerNode, int csExecTime, int numNodes) {
+    public Application(MutualExclusion mutualExclusion, int nodeID, String projectDir, int interRequestDelay, int requestsPerNode, int csExecTime, int numNodes, ArrayList<Neighbor> neighbors) {
         this.mutex = mutualExclusion;
         this.nodeID = nodeID;
         this.projectDir = projectDir;
@@ -25,13 +27,45 @@ public class Application  {
             mutex.fidgeClock[i] = 0;
         }
 
+        for(Neighbor n: neighbors){
+            //try to connect to n, and catch an exception if it fails. Repeat until it succeeds
+            while(true){
+                try {
+                    //open a socket to n
+                    Socket s = new Socket(n.getHostName(), n.getPort());
+                    //if it succeeds, close the socket and break out of the loop
+                    //send hello
+                    s.getOutputStream().write("HELLO\n".getBytes());
+                    s.close();
+                    break;
+                } catch (IOException e) {
+                    //e.printStackTrace();
+                    //System.out.println("Failed to connect to neighbor " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException interruptedException) {
+                        //interruptedException.printStackTrace();
+                    }
+                }
+            }
+            System.out.println("Connected to neighbor " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
+        }
+        System.out.println("All neighbors connected");
+
+
         app = new Thread(() -> {
             try {
-                FileWriter fileWriter = new FileWriter(projectDir + "\\output"+nodeID+".txt");
+                Thread.sleep(100);
+                mutex.messages = 0;
+                FileWriter fileWriter = new FileWriter(projectDir.replace("config.txt", "output" + nodeID + ".txt"));
+                //if(verbosity)
+                    System.out.println("Node " + nodeID + " app started");
+                long startTime = System.currentTimeMillis();
                 //loop for requestsPerNode
                 for (int i = 0; i < requestsPerNode; i++) {
                     //call mutex csEnter
-                    mutex.csEnter();
+                    long responseTime = mutex.csEnter();
+                    fileWriter.write("RESPONSETIME " + responseTime + "\n");
                     if(verbosity)
                         System.out.println("Node " + nodeID + " entered CS");
                     mutex.fidgeClock[nodeID]++;
@@ -50,14 +84,19 @@ public class Application  {
 
                     //call mutex csLeave
                     mutex.fidgeClock[nodeID]++;
-                    if(verbosity)
-                        System.out.println("Node " + nodeID + " left CS");
+                    //if(verbosity)
+                        //System.out.println("Node " + nodeID + " leaving CS");
                     mutex.csLeave();
 
                     //wait for interRequestDelay and loop
                     Thread.sleep((long) exponentialProbabilityDistribution(interRequestDelay));
                 }
+                long endTime = System.currentTimeMillis();
+                fileWriter.write("TOTALTIME " + (endTime - startTime) + "\n");
+                fileWriter.write("MESSAGES " + mutex.messages + "\n");
+
                 fileWriter.close();
+
                 if(verbosity)
                     System.out.println("Node " + nodeID + " app finished");
             } catch (IOException | InterruptedException e) {

@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class MutualExclusion {
-    private final boolean verbosity = false;
+    private final boolean verbosity = true;
     private int nodeID;
     private String hostName;
     private int port;
@@ -20,6 +20,7 @@ public class MutualExclusion {
     private boolean inCS;
     public int[] fidgeClock;
     private boolean finished;
+    public int messages;
 
     private Thread listener;
     private boolean alive;
@@ -50,7 +51,7 @@ public class MutualExclusion {
             socket.bind(socketAddress);
             System.out.println("Node " + nodeID + " listening on " + InetAddress.getLocalHost().getHostAddress() + ":" + port);*/
                 ServerSocket socket = new ServerSocket(port);
-                if(verbosity)
+                //if(verbosity)
                     System.out.println("Node " + nodeID + " listening on " + InetAddress.getLocalHost().getHostAddress() + ":" + port);
                 //listen for messages
                 while (alive) {
@@ -74,7 +75,7 @@ public class MutualExclusion {
                                 try {
                                     if(verbosity)
                                         System.out.println("Node " + nodeID + " sending permission to node " + message[1] + " at " + neighbors.get(Integer.parseInt(message[1])).getHostName() + ":" + neighbors.get(Integer.parseInt(message[1])).getPort());
-                                    Socket socket2 = new Socket(InetAddress.getLocalHost().getHostAddress(), neighbors.get(Integer.parseInt(message[1])).getPort());
+                                    Socket socket2 = new Socket(neighbors.get(Integer.parseInt(message[1])).getHostName(), neighbors.get(Integer.parseInt(message[1])).getPort());
                                     PrintWriter out = new PrintWriter(socket2.getOutputStream(), true);
                                     out.println("PERMISSION " + nodeID + " " + Arrays.toString(fidgeClock));
                                     socket2.close();
@@ -131,6 +132,8 @@ public class MutualExclusion {
                         case "EXIT":
                             inCS = false;
                             break;
+                        default:
+                            break;
                     }
 
                     /*//if all neighbors are dead, finish
@@ -164,26 +167,29 @@ public class MutualExclusion {
     /**
      * Enter the critical section. Request permission from all nodes for which we do not have permission.
      */
-    public void csEnter() {
+    public long csEnter() {
         if(verbosity)
             System.out.println("Node " + nodeID + " sent perms = " + sentPerms);
         myRequestClock = fidgeClock[nodeID];
         HashSet<Integer> requested = new HashSet<>();
         //make a copy of sentPerms to iterate over
         HashSet<Integer> tempSentPerms = new HashSet<>(sentPerms);
+        long startTime = System.currentTimeMillis();
         for(int i : tempSentPerms){
             try {
                 Neighbor n = neighbors.get(i);
                 if(verbosity)
                     System.out.println("Node " + nodeID + " requesting permission from node " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
-                Socket socket = new Socket(InetAddress.getLocalHost().getHostAddress(), n.getPort());
+                Socket socket = new Socket(n.getHostName(), n.getPort());
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 out.println("REQUEST " + nodeID + " " + myRequestClock + " " + Arrays.toString(fidgeClock));
+                messages++;
                 socket.close();
                 if(verbosity)
                     System.out.println("Node " + nodeID + " sent request to node " + i);
                 requested.add(i);
             } catch (IOException e) {
+                System.out.println("Node " + nodeID + " failed to send request to node " + i);
                 e.printStackTrace();
             }
         }
@@ -204,14 +210,16 @@ public class MutualExclusion {
                         Neighbor n = neighbors.get(i);
                         if(verbosity)
                             System.out.println("Node " + nodeID + " requesting permission from node " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
-                        Socket socket = new Socket(InetAddress.getLocalHost().getHostAddress(), n.getPort());
+                        Socket socket = new Socket(n.getHostName(), n.getPort());
                         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                         out.println("REQUEST " + nodeID + " " + myRequestClock);
+                        messages++;
                         socket.close();
                         if(verbosity)
                             System.out.println("Node " + nodeID + " sent request to node " + i);
                         requested.add(i);
                     } catch (IOException e) {
+                        System.out.println("Node " + nodeID + " failed to send request(2) to node " + i);
                         e.printStackTrace();
                     }
                 }
@@ -226,6 +234,9 @@ public class MutualExclusion {
         } catch (IOException e) {
             e.printStackTrace();
         }*/
+        long endTime = System.currentTimeMillis();
+
+        return endTime - startTime;
     }
 
     public void csLeave() {
@@ -245,9 +256,10 @@ public class MutualExclusion {
         //send all deferred messages
         for(int i : deferred){
             try {
-                Socket socket = new Socket(InetAddress.getLocalHost().getHostAddress(), neighbors.get(i).getPort());
+                Socket socket = new Socket(neighbors.get(i).getHostName(), neighbors.get(i).getPort());
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 out.println("PERMISSION " + nodeID + " " + Arrays.toString(fidgeClock));
+                messages++;
                 socket.close();
                 if(verbosity)
                     System.out.println("Node " + nodeID + " sent permission to node " + i);

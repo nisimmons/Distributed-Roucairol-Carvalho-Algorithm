@@ -1,12 +1,13 @@
 # nodes, inter-request delay, cs-exec time, requests per node
-9 20 20 20
+10 20 50 30
 
-0 26.131.7.250 1234
-1 26.131.7.250 1233
-2 26.131.7.250 5233
-3 26.131.7.250 1232
-4 26.131.7.250 1333
-5 26.131.7.250 3455
-6 26.131.7.250 6789
-7 26.131.7.250 3467
-8 26.131.7.250 2546
+0 localhost 1351
+1 localhost 1352
+2 localhost 1353
+3 localhost 1354
+4 localhost 1355
+5 localhost 1356
+6 localhost 1357
+7 localhost 1358
+8 localhost 1359
+9 localhost 1360

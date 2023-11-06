@@ -13,12 +13,11 @@ public class Evaluator {
         Scanner line;
 
         while(scanner.hasNext()) {
-            do {
-                s = scanner.nextLine();
-                s = s.replaceAll("#.*", "");    //remove comments
-                s = s.trim();                                   //remove leading and trailing whitespace
-            } while (!s.matches("^\\d .*"));              //check if the line starts with an unsigned integer
-            validLines.add(s);
+            s = scanner.nextLine();
+            s = s.replaceAll("#.*", "");    //remove comments
+            s = s.trim();                                   //remove leading and trailing whitespace
+            if (s.matches("^\\d.*"))              //check if the line starts with an unsigned integer
+                validLines.add(s);
         }
 
         //line 1 is nodes, inter-request delay, cs-exec time, requests per node
@@ -38,14 +37,29 @@ public class Evaluator {
 
 
 
+        long totalResponseTime = 0;
+        long totalMessages = 0;
+        long totalTime = 0;
 
         //fill list with entries from every output file
         ArrayList<specialObject> temp = new ArrayList<>();
         for(int i = 0; i < numNodes; i++) {
             Scanner fileScanner = new Scanner(new File("src/output"+i+".txt"));
             while(fileScanner.hasNext()) {
-                specialObject obj = new specialObject();
                 String l = fileScanner.nextLine();
+                if(l.contains("RESPONSETIME")) {
+                    totalResponseTime += Long.parseLong(l.substring(13));
+                    continue;
+                }
+                else if(l.contains("TOTALTIME")) {
+                    totalTime = Math.max(totalTime, Long.parseLong(l.substring(10)));
+                    continue;
+                }
+                else if(l.contains("MESSAGES")) {
+                    totalMessages += Long.parseLong(l.substring(9));
+                    continue;
+                }
+                specialObject obj = new specialObject();
                 obj.nodeID = Integer.parseInt(l.substring(0, l.indexOf(" ")));
                 obj.fidgeClock = new int[numNodes];
                 String[] clock = l.substring(l.indexOf("[")+1, l.indexOf("]")).split(", ");
@@ -55,11 +69,23 @@ public class Evaluator {
                 temp.add(obj);
             }
         }
+        long averageResponseTime = totalResponseTime/((long) numNodes *requestsPerNode);
+        double throughput = ((double)(requestsPerNode)*numNodes)/(totalTime/1000.0); //requests fulfilled per millisecond
+        System.out.println("Total messages: " + totalMessages);
+        System.out.println("Average response time: " + averageResponseTime + " milliseconds");
+        System.out.println("Throughput: " + throughput + " requests per second");
+
+        System.out.println();
+        System.out.println("Other info");
+        System.out.println("Total time: " + totalTime/1000 + " seconds");
+        System.out.println("Requests satisfied: " + requestsPerNode*numNodes);
+        System.out.println("Average messages per node: " + totalMessages/numNodes);
+
 
         //sort temp using comparator
         temp.sort(new specialComparator());
 
-        FileWriter fileWriter = new FileWriter("src/outputFull.txt");
+        FileWriter fileWriter = new FileWriter("outputFull.txt");
         for(int i = 0; i < temp.size(); i++) {
             fileWriter.write("Node " + temp.get(i).nodeID + " " + Arrays.toString(temp.get(i).fidgeClock) + "\n");
         }
@@ -81,29 +107,42 @@ public class Evaluator {
     public static boolean verifyFile(String fileName, int numNodes) throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(fileName));
         String s;
+        s = scanner.nextLine();
+        int[] clock1 = null;
+        int[] clock2 = null;
+        String[] clockString;
         while(scanner.hasNext()){
             s = scanner.nextLine();
-            int[] clock1 = new int[numNodes];
-            String[] clockString = s.substring(s.indexOf("[")+1, s.indexOf("]")).split(", ");
-            for(int i = 0; i < numNodes; i++) {
-                clock1[i] = Integer.parseInt(clockString[i]);
+
+            if(s.contains("RESPONSETIME") || s.contains("TOTALTIME") || s.contains("MESSAGES")) {
+                continue;
             }
-            s = scanner.nextLine();
-            int[] clock2 = new int[numNodes];
+            if(clock1 == null) {
+                clockString = s.substring(s.indexOf("[") + 1, s.indexOf("]")).split(", ");
+                clock1 = new int[numNodes];
+                for (int i = 0; i < numNodes; i++) {
+                    clock1[i] = Integer.parseInt(clockString[i]);
+                }
+                continue;
+            }
             clockString = s.substring(s.indexOf("[")+1, s.indexOf("]")).split(", ");
+            clock2 = new int[numNodes];
             for(int i = 0; i < numNodes; i++) {
                 clock2[i] = Integer.parseInt(clockString[i]);
             }
+
             if(!compareClocks(clock1, clock2)) {
                 System.out.println("Clock 1: " + Arrays.toString(clock1));
                 System.out.println("Clock 2: " + Arrays.toString(clock2));
                 return false;
             }
+            clock1 = clock2;
         }
         return true;
     }
 
     private static boolean compareClocks(int[] clock1, int[] clock2) {
+        //check if clock 1 is never greater than, and not equal to clock 2
         boolean equals = true;
         for(int i = 0; i < clock1.length; i++) {
             if(clock1[i] > clock2[i]) {

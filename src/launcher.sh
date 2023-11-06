@@ -16,7 +16,7 @@ CONFIGLOCAL=/home/013/n/ni/nis190000/cs6378/Project/config.txt
 BINDIR=$PROJDIR
 
 # Your main project class [CHANGE THIS if you rename the project]
-PROG=Project1
+PROG=Project2Node
 
 # extension for hosts [CHANGE THIS if using a different host system (setting to "" should suffice)]
 hostExtension="utdallas.edu"
