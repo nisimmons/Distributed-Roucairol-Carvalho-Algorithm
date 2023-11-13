@@ -22,7 +22,7 @@ PROG=Project2Node
 hostExtension="utdallas.edu"
 
 # run command [CHANGE THIS if you want a different pattern or use a different software]
-runCommand="java -cp $BINDIR $PROG $CONFIGLOCAL"
+runCommand="java -cp $BINDIR $PROG $PROJDIR"
 # remove $CONFIGLOCAL if you don't want to give your program the configuration file path as an argument
 
 # loop through hosts, remove comment lines starting with # and $ and any carriage returns

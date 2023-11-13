@@ -1,7 +1,5 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -35,10 +33,10 @@ public class Project2Node {
         }
     }
 
-    public void readFile(String filename) throws FileNotFoundException, UnknownHostException {
-        projectDir = filename;
+    public void readFile(String dir) throws FileNotFoundException, UnknownHostException {
+        projectDir = dir;
         //read the config file
-        Scanner scanner = new Scanner(new File(filename));
+        Scanner scanner = new Scanner(new File(projectDir + "/config.txt"));
         String s;
         ArrayList<String> validLines = new ArrayList<>();
         Scanner line;
@@ -82,10 +80,10 @@ public class Project2Node {
         }
     }
 
-    public void readFile(String filename, int nodeID) throws FileNotFoundException {
-        projectDir = filename;
+    public void readFile(String dir, int nodeID) throws FileNotFoundException {
+        projectDir = dir;
         //read the config file
-        Scanner scanner = new Scanner(new File(filename));
+        Scanner scanner = new Scanner(new File(dir + "/config.txt"));
         String s;
         ArrayList<String> validLines = new ArrayList<>();
         Scanner line;
@@ -130,28 +128,17 @@ public class Project2Node {
                 neighbors.add(neighbor);
             }
         }
+        if(nodeID == 1){
+            System.out.println("Node " + nodeID + " neighbors:");
+            for(Neighbor n: neighbors){
+                System.out.println(n.getId() + " " + n.getHostName() + " " + n.getPort());
+            }
+        }
     }
 
     public void run(){
         //initialize the mutex and application and run
         MutualExclusion mt = new MutualExclusion(nodeID, ip, port, projectDir, numNodes, neighbors);
         new Application(mt, nodeID, projectDir, interRequestDelay, requestsPerNode, csExecTime, numNodes , neighbors);
-    }
-
-    public void writeOutput(){
-        //write output to config<id>.out
-        try {
-            FileWriter writer = new FileWriter(projectDir+"/config-" + nodeID + ".out");
-            //write all messages
-            for(String s : messages){
-                writer.write(s);
-                writer.write("\n");
-            }
-
-            writer.close();
-            System.out.println("Output written to config" + nodeID + ".out");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

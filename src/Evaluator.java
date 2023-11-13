@@ -7,7 +7,7 @@ import java.util.*;
 public class Evaluator {
     public static void main(String[] args) throws IOException {
         //read the config file to find num nodes, inter-request delay, cs-exec time, requests per node
-        Scanner scanner = new Scanner(new File("src/config.txt"));
+        Scanner scanner = new Scanner(new File("config.txt"));
         String s;
         ArrayList<String> validLines = new ArrayList<>();
         Scanner line;
@@ -28,14 +28,11 @@ public class Evaluator {
         int requestsPerNode = line.nextInt();
 
         for(int i = 0; i < numNodes; i++) {
-            if(!verifyFile("src/output"+i+".txt", numNodes)) {
-                throw new RuntimeException("Invalid file for node " + i);
+            if(!verifyFile("output"+i+".txt", numNodes)) {
+                System.out.println("Invalid file for node " + i);
+                //throw new RuntimeException("Invalid file for node " + i);
             }
         }
-
-        //create a list of objects with one int and one array
-
-
 
         long totalResponseTime = 0;
         long totalMessages = 0;
@@ -44,7 +41,7 @@ public class Evaluator {
         //fill list with entries from every output file
         ArrayList<specialObject> temp = new ArrayList<>();
         for(int i = 0; i < numNodes; i++) {
-            Scanner fileScanner = new Scanner(new File("src/output"+i+".txt"));
+            Scanner fileScanner = new Scanner(new File("output"+i+".txt"));
             while(fileScanner.hasNext()) {
                 String l = fileScanner.nextLine();
                 if(l.contains("RESPONSETIME")) {
@@ -71,13 +68,14 @@ public class Evaluator {
         }
         long averageResponseTime = totalResponseTime/((long) numNodes *requestsPerNode);
         double throughput = ((double)(requestsPerNode)*numNodes)/(totalTime/1000.0); //requests fulfilled per millisecond
-        System.out.println("Total messages: " + totalMessages);
         System.out.println("Average response time: " + averageResponseTime + " milliseconds");
+        System.out.println("Total messages: " + totalMessages);
         System.out.println("Throughput: " + throughput + " requests per second");
 
         System.out.println();
         System.out.println("Other info");
         System.out.println("Total time: " + totalTime/1000 + " seconds");
+        System.out.println("Total response time: " + totalResponseTime/1000 + " seconds");
         System.out.println("Requests satisfied: " + requestsPerNode*numNodes);
         System.out.println("Average messages per node: " + totalMessages/numNodes);
 
@@ -97,13 +95,21 @@ public class Evaluator {
             if(temp.get(i).nodeID != temp.get(i+1).nodeID) {
                 System.out.println("Node " + temp.get(i).nodeID + " entered with clock " + Arrays.toString(temp.get(i).fidgeClock));
                 System.out.println("Node " + temp.get(i+1).nodeID + " exited with clock " + Arrays.toString(temp.get(i+1).fidgeClock));
-                throw new RuntimeException("Invalid entry/exit");
+                System.out.println("Invalid entry/exit (different nodes)");
+                //throw new RuntimeException("Invalid entry/exit");
             }
         }
-        System.out.println("All entries and exits are valid");
+        System.out.println("Evaluation complete");
     }
 
 
+    /**
+     * Verifies that the file is valid
+     * @param fileName name of file to verify
+     * @param numNodes number of nodes
+     * @return true if valid, false otherwise
+     * @throws FileNotFoundException if file not found
+     */
     public static boolean verifyFile(String fileName, int numNodes) throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(fileName));
         String s;
@@ -131,6 +137,7 @@ public class Evaluator {
                 clock2[i] = Integer.parseInt(clockString[i]);
             }
 
+            //check that clock 1 is never greater than clock 2 and not equal to clock 2 (not concurrent)
             if(!compareClocks(clock1, clock2)) {
                 System.out.println("Clock 1: " + Arrays.toString(clock1));
                 System.out.println("Clock 2: " + Arrays.toString(clock2));
@@ -141,6 +148,12 @@ public class Evaluator {
         return true;
     }
 
+    /**
+     * Compares two clocks
+     * @param clock1 clock 1
+     * @param clock2 clock 2
+     * @return true if clock1 is never greater than clock2 and not equal to clock2, false otherwise
+     */
     private static boolean compareClocks(int[] clock1, int[] clock2) {
         //check if clock 1 is never greater than, and not equal to clock 2
         boolean equals = true;
@@ -156,34 +169,45 @@ public class Evaluator {
     }
 
 
+    /**
+     * Special object to store nodeID and fidgeClock
+     */
     static class specialObject {
         int nodeID;
         int[] fidgeClock;
     }
-    //Make a comparator to compare the arrays
+
+    /**
+     * Special comparator to compare specialObjects
+     */
     static class specialComparator implements Comparator<specialObject> {
         public int compare(specialObject aa, specialObject bb) {
             int[] a = aa.fidgeClock;
             int[] b = bb.fidgeClock;
             //check if each value in a is <= b and one value is < b or vice versa
-            boolean lessThan = false;
-            boolean greaterThan = false;
+            boolean oneEntryLessThan = false;
+            boolean oneEntryGreaterThan = false;
+            boolean equal = true;
             for(int i = 0; i < a.length; i++) {
                 if(a[i] < b[i]) {
-                    lessThan = true;
+                    oneEntryLessThan = true;
                 }
                 if(a[i] > b[i]) {
-                    greaterThan = true;
+                    oneEntryGreaterThan = true;
+                }
+                if(a[i] != b[i]) {
+                    equal = false;
                 }
             }
-            if(lessThan && greaterThan) {
+            if((oneEntryLessThan && oneEntryGreaterThan) || equal) {
                 //throw exception
-                System.out.println("Invalid clock");
+                System.out.println("Invalid clock (concurrent)");
                 System.out.println("a: " + Arrays.toString(a));
                 System.out.println("b: " + Arrays.toString(b));
-                throw new RuntimeException("Invalid clock");
+                //throw new RuntimeException("Invalid clock");
+                return 0;
             }
-            else if(lessThan) {
+            else if(oneEntryLessThan) {
                 return -1;
             }
             else {

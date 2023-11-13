@@ -5,8 +5,11 @@ import java.util.Arrays;
 import java.util.Random;
 import java.net.Socket;
 
+/**
+ * Application class. Creates a thread that runs the application.
+ */
 public class Application  {
-    private final boolean verbosity = true;
+    private final boolean verbosity = false;
     MutualExclusion mutex;
     private int numNodes;
     private final int interRequestDelay;
@@ -15,6 +18,19 @@ public class Application  {
     private final int nodeID;
     private final String projectDir;
     Random rand = new Random();
+    Thread app;
+
+    /**
+     * Constructor for the application class. Creates a thread that runs the application.
+     * @param mutualExclusion mutual exclusion object
+     * @param nodeID node ID
+     * @param projectDir project directory
+     * @param interRequestDelay inter-request delay
+     * @param requestsPerNode requests per node
+     * @param csExecTime cs-exec time
+     * @param numNodes number of nodes
+     * @param neighbors list of neighbors
+     */
     public Application(MutualExclusion mutualExclusion, int nodeID, String projectDir, int interRequestDelay, int requestsPerNode, int csExecTime, int numNodes, ArrayList<Neighbor> neighbors) {
         this.mutex = mutualExclusion;
         this.nodeID = nodeID;
@@ -36,19 +52,18 @@ public class Application  {
                     //if it succeeds, close the socket and break out of the loop
                     //send hello
                     s.getOutputStream().write("HELLO\n".getBytes());
+                    if(verbosity)
+                        System.out.println("Sent HELLO to neighbor " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
                     s.close();
                     break;
                 } catch (IOException e) {
-                    //e.printStackTrace();
-                    //System.out.println("Failed to connect to neighbor " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
                     try {
                         Thread.sleep(1000);
-                    } catch (InterruptedException interruptedException) {
-                        //interruptedException.printStackTrace();
-                    }
+                    } catch (InterruptedException ignored) {}
                 }
             }
-            System.out.println("Connected to neighbor " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
+            if(verbosity)
+                System.out.println("Connected to neighbor " + n.getId() + " at " + n.getHostName() + ":" + n.getPort());
         }
         System.out.println("All neighbors connected");
 
@@ -57,7 +72,7 @@ public class Application  {
             try {
                 Thread.sleep(100);
                 mutex.messages = 0;
-                FileWriter fileWriter = new FileWriter(projectDir.replace("config.txt", "output" + nodeID + ".txt"));
+                FileWriter fileWriter = new FileWriter(projectDir + "/output" + nodeID + ".txt");
                 //if(verbosity)
                     System.out.println("Node " + nodeID + " app started");
                 long startTime = System.currentTimeMillis();
@@ -84,9 +99,11 @@ public class Application  {
 
                     //call mutex csLeave
                     mutex.fidgeClock[nodeID]++;
-                    //if(verbosity)
-                        //System.out.println("Node " + nodeID + " leaving CS");
+                    if(verbosity)
+                        System.out.println("Node " + nodeID + " leaving CS...");
                     mutex.csLeave();
+                    if(verbosity)
+                        System.out.println("Node " + nodeID + " left CS");
 
                     //wait for interRequestDelay and loop
                     Thread.sleep((long) exponentialProbabilityDistribution(interRequestDelay));
@@ -97,7 +114,7 @@ public class Application  {
 
                 fileWriter.close();
 
-                if(verbosity)
+                //if(verbosity)
                     System.out.println("Node " + nodeID + " app finished");
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
@@ -107,19 +124,12 @@ public class Application  {
         app.start();
     }
 
-    Thread app;
     /**
-     * Main method for the application thread. Calls mutex.csEnter, writes to output file, sleeps for csExecTime, writes to output file, and calls mutex.csLeave
+     * Returns the exponential probability distribution of x
+     * @param x input
+     * @return exponential probability distribution of x
      */
-
-
     private double exponentialProbabilityDistribution(int x){
-        /*Random random = new Random();
-        return -x * Math.log(1 - random.nextDouble());*/
-        //return x*(rand.nextInt(4)+1);
-        //return lambda e^-lambda*x
         return -x*Math.log(1-rand.nextDouble());
-
-
     }
 }

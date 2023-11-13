@@ -1,5 +1,5 @@
 # nodes, inter-request delay, cs-exec time, requests per node
-10 20 50 30
+10 10 130 1000
 
 0 localhost 1351
 1 localhost 1352
